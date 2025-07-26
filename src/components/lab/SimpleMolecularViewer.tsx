@@ -65,7 +65,7 @@ export default function SimpleMolecularViewer({
         onDataExport(basicData)
       }
     }
-  }, [compound, reactionResult, onDataExport])
+  }, [compound, reactionResult]) // Removed onDataExport from dependencies
 
   const handleDownload = async () => {
     if (!molecularData) return
@@ -279,7 +279,13 @@ Generated: ${new Date().toISOString()}`
                             </div>
                           ))}
                         </div>
-                        <div className="text-4xl mt-4">🔬</div>
+                        <div className="mt-4 flex items-center justify-center">
+                          <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center ${
+                            isDarkTheme ? 'border-slate-400 bg-slate-700' : 'border-gray-400 bg-gray-100'
+                          }`}>
+                            <span className="text-lg font-bold">3D</span>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -292,7 +298,13 @@ Generated: ${new Date().toISOString()}`
               <div className="flex flex-col items-center">
                 {/* 2D Lewis Structure representation */}
                 <div className="text-2xl font-mono mb-2">{reactionResult.chemicalFormula}</div>
-                <div className="text-4xl">⚛️</div>
+                <div className="mt-4 flex items-center justify-center">
+                  <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center ${
+                    isDarkTheme ? 'border-slate-400 bg-slate-700' : 'border-gray-400 bg-gray-100'
+                  }`}>
+                    <span className="text-lg font-bold">2D</span>
+                  </div>
+                </div>
                 <div className={`text-xs mt-2 ${isDarkTheme ? 'text-slate-400' : 'text-slate-500'}`}>
                   2D Lewis Structure
                 </div>

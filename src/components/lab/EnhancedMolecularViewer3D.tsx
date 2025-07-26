@@ -222,10 +222,30 @@ const EnhancedMolecularViewer3D: React.FC<EnhancedMolecularViewer3DProps> = ({
 
       console.log('Generating molecular structure for:', cleanFormula)
 
-      // Try to get PubChem 2D image as fallback
+      // Try to get PubChem 2D image as fallback - try compound name first, then formula
       try {
-        const pubchemUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(cleanFormula)}/PNG`
-        setPubchemImage(pubchemUrl)
+        let pubchemUrl = null
+        
+        // Try compound name first if available
+        if (reactionResult?.compoundName) {
+          pubchemUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(reactionResult.compoundName)}/PNG`
+          try {
+            const response = await fetch(pubchemUrl, { method: 'HEAD' })
+            if (response.ok) {
+              setPubchemImage(pubchemUrl)
+            } else {
+              throw new Error('Compound name not found')
+            }
+          } catch {
+            // Try with formula instead
+            pubchemUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(cleanFormula)}/PNG`
+            setPubchemImage(pubchemUrl)
+          }
+        } else {
+          // Use formula directly
+          pubchemUrl = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(cleanFormula)}/PNG`
+          setPubchemImage(pubchemUrl)
+        }
       } catch (e) {
         console.log('Could not load PubChem image')
         setPubchemImage(null)

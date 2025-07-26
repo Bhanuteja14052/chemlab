@@ -9,9 +9,9 @@ import Element from '@/components/lab/Element'
 import Beaker from '@/components/lab/Beaker'
 import SaveExperimentDialog from '@/components/lab/SaveExperimentDialog'
 import MolecularViewer3D from '@/components/lab/MolecularViewer3D'
-import EnhancedMolecularViewer3D from '@/components/lab/EnhancedMolecularViewer3D'
 import LoadingAnimation from '@/components/lab/LoadingAnimation'
 import OptimizedLoading from '@/components/lab/OptimizedLoading'
+import RecentResults from '@/components/lab/RecentResults'
 
 interface ElementData {
   symbol: string
@@ -38,7 +38,7 @@ interface ReactionResult {
 }
 
 export default function PlayModePage() {
-  const [isDarkTheme, setIsDarkTheme] = useState(false)
+  const [isDarkTheme, setIsDarkTheme] = useState(true) // Default to dark mode
   const [settings, setSettings] = useState<any>({
     preferences: { autoSave: true }
   })
@@ -72,7 +72,15 @@ export default function PlayModePage() {
       setIsDarkTheme(theme === 'dark')
     }
     
-    checkTheme()
+    // Only set default dark mode if no theme preference exists
+    const savedTheme = localStorage.getItem('theme-preference')
+    if (!savedTheme && !document.documentElement.getAttribute('data-theme')) {
+      document.documentElement.setAttribute('data-theme', 'dark')
+      localStorage.setItem('theme-preference', 'dark')
+      setIsDarkTheme(true)
+    } else {
+      checkTheme()
+    }
     
     const observer = new MutationObserver(checkTheme)
     observer.observe(document.documentElement, {
@@ -279,7 +287,7 @@ export default function PlayModePage() {
       return { emoji: '💨', text: 'Gas' }
     }
     if (lowerState.includes('liquid') || lowerState.includes('aqueous') || lowerState.includes('solution')) {
-      return { emoji: '💧', text: 'Liquid' }
+      return { emoji: '🌊', text: 'Liquid' }
     }
     if (lowerState.includes('solid') || lowerState.includes('crystal') || lowerState.includes('powder')) {
       return { emoji: '🧊', text: 'Solid' }
@@ -288,7 +296,7 @@ export default function PlayModePage() {
       return { emoji: '⚡', text: 'Plasma' }
     }
     
-    return { emoji: '❓', text: state }
+    return { emoji: '🌊', text: 'Liquid' } // Default to liquid state with wave emoji
   }
 
   const handleElementDrop = async (elementName: string) => {
@@ -353,6 +361,58 @@ export default function PlayModePage() {
     setShowResult(false)
     
     console.log('Workbench completely cleared (Play)')
+  }
+
+  // Test pH of current compound using Gemini API
+  const testPH = async () => {
+    if (!reactionResult) {
+      alert('No compound to test pH for!')
+      return
+    }
+
+    try {
+      setIsReacting(true)
+      
+      const prompt = `I have the compound "${reactionResult.compoundName}" with chemical formula "${reactionResult.chemicalFormula}".
+
+Please analyze this compound and provide:
+1. Convert this compound to its suitable form for pH testing (if it's not already in aqueous solution)
+2. What is the pH value of this compound when properly prepared for testing?
+3. Is it acidic, basic, or neutral?
+4. Any special considerations for pH testing this compound?
+
+Please provide a clear, concise response suitable for a chemistry student.`
+
+      const response = await fetch('/api/reactions/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to get pH analysis: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      
+      if (data.success && data.prediction) {
+        // Update reaction result with pH information
+        const updatedResult = {
+          ...reactionResult,
+          explanation: `${reactionResult.explanation}\n\nPH Analysis: ${data.prediction}`,
+          phAnalysis: data.prediction
+        }
+        setReactionResult(updatedResult)
+        alert(`pH Analysis:\n${data.prediction}`)
+      } else {
+        throw new Error(data.error || 'Failed to analyze pH')
+      }
+    } catch (error) {
+      console.error('Error testing pH:', error)
+      alert(`Error testing pH: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setIsReacting(false)
+    }
   }
 
   // Handle molecular data export from MolecularViewer3D
@@ -576,7 +636,7 @@ export default function PlayModePage() {
       </nav>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid lg:grid-cols-3 gap-6">
             {/* Elements Panel */}
             <div className="lg:col-span-1">
               <div className="bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-600 p-6">
@@ -857,10 +917,10 @@ export default function PlayModePage() {
                           
                           {/* State indicator */}
                           <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-slate-700 rounded-full text-xs font-medium border border-slate-500 shadow-sm text-white">
-                            {reactionResult.state === 'solid' && '�'}
-                            {reactionResult.state === 'liquid' && '💧'}
-                            {reactionResult.state === 'gas' && '💨'}
-                            {reactionResult.state === 'plasma' && reactionResult.state}
+                            {(() => {
+                              const stateDisplay = getStateDisplay(reactionResult.state)
+                              return stateDisplay.emoji
+                            })()}
                           </div>
                         </div>
                       </div>
@@ -938,8 +998,16 @@ export default function PlayModePage() {
                       </div>
                     </div>
 
-                    {/* Save Result Button */}
-                    <div className="mt-6 flex justify-end">
+                    {/* Action Buttons */}
+                    <div className="mt-6 flex justify-end space-x-3">
+                      <button
+                        onClick={testPH}
+                        disabled={isReacting}
+                        className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <span className="text-sm">🧪</span>
+                        <span>{isReacting ? 'Testing...' : 'Test pH'}</span>
+                      </button>
                       <button
                         onClick={() => setShowSaveDialog(true)}
                         className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -952,67 +1020,20 @@ export default function PlayModePage() {
                 )}
               </div>
             </div>
-          </div>
 
-          {/* Recent Results Panel */}
-          <div className="mt-8">
-            <div className="bg-slate-800/90 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-600 p-6">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center">
-                <FlaskConical className="h-5 w-5 text-green-400 mr-2" />
-                Recent Results
-                {reactionHistory.length > 0 && (
-                  <span className="ml-2 text-xs px-2 py-1 rounded-full bg-green-600 text-white">
-                    {reactionHistory.length}
-                  </span>
-                )}
-              </h3>
-              
-              {reactionHistory.length === 0 ? (
-                <div className="text-center py-6 text-slate-400">
-                  <FlaskConical className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No recent reactions to display</p>
-                  <p className="text-xs">Perform reactions to see them here</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {reactionHistory.slice().reverse().map((result, index) => (
-                    <div key={index} className="p-3 bg-gradient-to-r from-slate-700 to-slate-600 rounded-lg border border-slate-500">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="font-medium text-sm text-white">{result.compoundName}</div>
-                          <div className="text-xs text-green-400">{result.chemicalFormula}</div>
-                          <div className="text-xs text-slate-300 mt-1 line-clamp-2">{result.explanation}</div>
-                        </div>
-                        <div className="ml-3 flex flex-col items-end space-y-1">
-                          <div className={`px-2 py-1 rounded text-xs font-medium ${
-                            result.state === 'gas' 
-                              ? 'bg-blue-800 text-blue-200'
-                              : result.state === 'liquid' || result.state === 'aqueous'
-                              ? 'bg-cyan-800 text-cyan-200'
-                              : 'bg-amber-800 text-amber-200'
-                          }`}>
-                            {(() => {
-                              const stateDisplay = getStateDisplay(result.state)
-                              return (
-                                <>
-                                  {stateDisplay.emoji && <span className="mr-1">{stateDisplay.emoji}</span>}
-                                  {stateDisplay.text}
-                                </>
-                              )
-                            })()}
-                          </div>
-                          {result.safetyWarnings.length > 0 && (
-                            <div className="text-xs text-orange-400 flex items-center">
-                              <span className="mr-1">⚠️</span>
-                              {result.safetyWarnings.length} warning{result.safetyWarnings.length > 1 ? 's' : ''}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+            {/* Right Panel - Recent Results Only */}
+            <div className="lg:col-span-1">
+              {/* Recent Results Component */}
+              <RecentResults
+                results={reactionHistory}
+                onResultSelect={(result) => {
+                  setReactionResult(result)
+                  setShowResult(true)
+                  setBeakerColor(result.color)
+                }}
+                onClearHistory={() => setReactionHistory([])}
+                className="bg-slate-800/90 backdrop-blur-sm border-slate-600"
+              />
             </div>
           </div>
 

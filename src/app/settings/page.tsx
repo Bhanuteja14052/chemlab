@@ -14,14 +14,11 @@ import {
   Trash2,
   Save,
   RotateCcw,
-  Eye,
-  Sun,
-  Moon
+  Eye
 } from 'lucide-react'
 import Link from 'next/link'
 
 interface UserSettings {
-  theme: 'light' | 'dark'
   preferences: {
     defaultMode: 'play' | 'practical'
     autoSave: boolean
@@ -37,7 +34,6 @@ export default function SettingsPage() {
   const { user } = useUser()
   const [activeTab, setActiveTab] = useState('profile')
   const [settings, setSettings] = useState<UserSettings>({
-    theme: 'light',
     preferences: {
       defaultMode: 'play',
       autoSave: true,
@@ -62,9 +58,6 @@ export default function SettingsPage() {
         console.error('Error parsing saved settings:', error)
       }
     }
-    
-    // Apply theme settings
-    applyThemeSettings()
   }, [])
 
   // Apply settings when they change
@@ -72,22 +65,7 @@ export default function SettingsPage() {
     applySettingsWithoutSaving()
   }, [settings])
 
-  const applyThemeSettings = () => {
-    const savedSettings = localStorage.getItem('lab-settings')
-    if (savedSettings) {
-      try {
-        const parsedSettings = JSON.parse(savedSettings)
-        applyTheme(parsedSettings.theme)
-      } catch (error) {
-        console.error('Error applying theme settings:', error)
-      }
-    }
-  }
-
   const applySettingsWithoutSaving = () => {
-    // Apply theme
-    applyTheme(settings.theme)
-    
     // Apply animations
     if (settings.preferences.animations) {
       document.body.classList.remove('no-animations')
@@ -117,11 +95,6 @@ export default function SettingsPage() {
     localStorage.setItem('lab-settings', JSON.stringify(settings))
   }
 
-  const applyTheme = (theme: 'light' | 'dark') => {
-    const root = document.documentElement
-    root.setAttribute('data-theme', theme)
-  }
-
   const updateSetting = (section: keyof UserSettings, key: string, value: any) => {
     setSettings(prev => ({
       ...prev,
@@ -141,7 +114,6 @@ export default function SettingsPage() {
 
   const resetSettings = () => {
     const defaultSettings: UserSettings = {
-      theme: 'light',
       preferences: {
         defaultMode: 'play',
         autoSave: true,
@@ -205,7 +177,6 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: <User className="h-4 w-4" /> },
-    { id: 'appearance', label: 'Appearance', icon: <Palette className="h-4 w-4" /> },
     { id: 'preferences', label: 'Preferences', icon: <Globe className="h-4 w-4" /> },
     { id: 'accessibility', label: 'Accessibility', icon: <Eye className="h-4 w-4" /> },
     { id: 'data', label: 'Data & Storage', icon: <Database className="h-4 w-4" /> }
@@ -307,7 +278,7 @@ export default function SettingsPage() {
                           readOnly
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-black"
                         />
-                        <p className="text-sm text-gray-500 mt-1">Managed by Clerk Authentication</p>
+                        <p className="text-sm text-black mt-1">Managed by Clerk Authentication</p>
                       </div>
 
                       <div>
@@ -318,39 +289,7 @@ export default function SettingsPage() {
                           readOnly
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-black"
                         />
-                        <p className="text-sm text-gray-500 mt-1">Managed by Clerk Authentication</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'appearance' && (
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-medium text-black mb-3">Theme</label>
-                      <div className="grid grid-cols-2 gap-3">
-                        {[
-                          { value: 'light', label: 'Light', icon: <Sun className="h-4 w-4" /> },
-                          { value: 'dark', label: 'Dark', icon: <Moon className="h-4 w-4" /> }
-                        ].map((theme) => (
-                          <button
-                            key={theme.value}
-                            onClick={() => {
-                              setSettings(prev => ({ ...prev, theme: theme.value as 'light' | 'dark' }))
-                              setHasChanges(true)
-                              // Immediately apply theme for preview
-                              applyTheme(theme.value as 'light' | 'dark')
-                            }}
-                            className={`flex items-center space-x-2 p-3 rounded-lg border transition-colors ${
-                              settings.theme === theme.value
-                                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                : 'border-gray-200 hover:bg-gray-50 text-black'
-                            }`}
-                          >
-                            {theme.icon}
-                            <span>{theme.label}</span>
-                          </button>
-                        ))}
+                        <p className="text-sm text-black mt-1">Managed by Clerk Authentication</p>
                       </div>
                     </div>
                   </div>
@@ -373,7 +312,7 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <h4 className="text-sm font-medium text-black">Auto-save Experiments</h4>
-                        <p className="text-sm text-gray-500">Automatically save experiments when completed</p>
+                        <p className="text-sm text-black">Automatically save experiments when completed</p>
                       </div>
                       <ToggleSwitch
                         enabled={settings.preferences.autoSave}
@@ -384,7 +323,7 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <h4 className="text-sm font-medium text-black">Animations</h4>
-                        <p className="text-sm text-gray-500">Enable smooth animations and transitions</p>
+                        <p className="text-sm text-black">Enable smooth animations and transitions</p>
                       </div>
                       <ToggleSwitch
                         enabled={settings.preferences.animations}
@@ -399,7 +338,7 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <h4 className="text-sm font-medium text-black">Reduced Motion</h4>
-                        <p className="text-sm text-gray-500">Minimize animations and motion effects</p>
+                        <p className="text-sm text-black">Minimize animations and motion effects</p>
                       </div>
                       <ToggleSwitch
                         enabled={settings.accessibility.reducedMotion}
@@ -410,7 +349,7 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <h4 className="text-sm font-medium text-black">Large Text</h4>
-                        <p className="text-sm text-gray-500">Increase text size for better readability</p>
+                        <p className="text-sm text-black">Increase text size for better readability</p>
                       </div>
                       <ToggleSwitch
                         enabled={settings.accessibility.largeText}
@@ -450,7 +389,7 @@ export default function SettingsPage() {
                 )}
               </div>
 
-              {/* Action Buttons - Only show for profile, appearance, preferences, and accessibility tabs */}
+              {/* Action Buttons - Only show for profile, preferences, and accessibility tabs */}
               {hasChanges && activeTab !== 'data' && (
                 <div className="border-t border-gray-200 px-6 py-4 flex items-center justify-between">
                   <div className="flex space-x-3">

@@ -128,8 +128,8 @@ const RecentResults: React.FC<RecentResultsProps> = ({
                   </span>
                 </div>
                 
-                <p className="text-xs text-gray-600 line-clamp-2">
-                  {truncateText(result.explanation.replace(/\.{2,}/g, '...'))}
+                <p className="text-xs text-gray-600 line-clamp-6">
+                  {result.explanation.replace(/\.{2,}/g, '...').trim()}
                 </p>
                 
                 {result.reactionEquation && (

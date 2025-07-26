@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Sphere, Text } from '@react-three/drei'
 import * as THREE from 'three'
-import { RotateCcw, AlertTriangle } from 'lucide-react'
+import { RotateCcw, AlertTriangle, Brain } from 'lucide-react'
 import LoadingAnimation from './LoadingAnimation'
 
 interface Atom {
@@ -116,8 +116,11 @@ const BOND_LENGTHS: Record<string, number> = {
 const parseChemicalFormula = (formula: string): { [element: string]: number } => {
   const elementCount: { [element: string]: number } = {}
   
-  // Remove whitespace
+  // Remove whitespace and convert subscripts
   formula = formula.replace(/\s+/g, '')
+  formula = formula.replace(/₀/g, '0').replace(/₁/g, '1').replace(/₂/g, '2')
+                   .replace(/₃/g, '3').replace(/₄/g, '4').replace(/₅/g, '5')
+                   .replace(/₆/g, '6').replace(/₇/g, '7').replace(/₈/g, '8').replace(/₉/g, '9')
   
   // Handle parentheses recursively
   const parseWithParentheses = (str: string): { [element: string]: number } => {
@@ -255,12 +258,124 @@ class MolecularBuilder {
         source: 'generated',
         atoms: [
           { element: 'C', position: [0, 0, 0], color: '#404040', radius: 0.76, valency: 4 },
-          { element: 'O', position: [1.23, 0, 0], color: '#ff0d0d', radius: 0.66, valency: 2 },
-          { element: 'O', position: [-1.23, 0, 0], color: '#ff0d0d', radius: 0.66, valency: 2 }
+          { element: 'O', position: [1.16, 0, 0], color: '#ff0d0d', radius: 0.66, valency: 2 },
+          { element: 'O', position: [-1.16, 0, 0], color: '#ff0d0d', radius: 0.66, valency: 2 }
         ],
         bonds: [
-          { start: [0, 0, 0], end: [1.23, 0, 0], type: 'double', length: 1.23, startAtomIndex: 0, endAtomIndex: 1 },
-          { start: [0, 0, 0], end: [-1.23, 0, 0], type: 'double', length: 1.23, startAtomIndex: 0, endAtomIndex: 2 }
+          { start: [0, 0, 0], end: [1.16, 0, 0], type: 'double', length: 1.16, startAtomIndex: 0, endAtomIndex: 1 },
+          { start: [0, 0, 0], end: [-1.16, 0, 0], type: 'double', length: 1.16, startAtomIndex: 0, endAtomIndex: 2 }
+        ]
+      },
+      'NaCl': {
+        name: 'Sodium Chloride',
+        formula: 'NaCl',
+        geometry: 'linear',
+        isValid: true,
+        source: 'generated',
+        atoms: [
+          { element: 'Na', position: [0, 0, 0], color: '#ab5cf2', radius: 1.86, valency: 1 },
+          { element: 'Cl', position: [2.36, 0, 0], color: '#1ff01f', radius: 0.99, valency: 1 }
+        ],
+        bonds: [
+          { start: [0, 0, 0], end: [2.36, 0, 0], type: 'single', length: 2.36, startAtomIndex: 0, endAtomIndex: 1 }
+        ]
+      },
+      'HCl': {
+        name: 'Hydrogen Chloride',
+        formula: 'HCl',
+        geometry: 'linear',
+        isValid: true,
+        source: 'generated',
+        atoms: [
+          { element: 'H', position: [0, 0, 0], color: '#ffffff', radius: 0.31, valency: 1 },
+          { element: 'Cl', position: [1.27, 0, 0], color: '#1ff01f', radius: 0.99, valency: 1 }
+        ],
+        bonds: [
+          { start: [0, 0, 0], end: [1.27, 0, 0], type: 'single', length: 1.27, startAtomIndex: 0, endAtomIndex: 1 }
+        ]
+      },
+      'MgCl2': {
+        name: 'Magnesium Chloride',
+        formula: 'MgCl2',
+        geometry: 'linear',
+        isValid: true,
+        source: 'generated',
+        atoms: [
+          { element: 'Mg', position: [0, 0, 0], color: '#8aff00', radius: 1.60, valency: 2 },
+          { element: 'Cl', position: [2.20, 0, 0], color: '#1ff01f', radius: 0.99, valency: 1 },
+          { element: 'Cl', position: [-2.20, 0, 0], color: '#1ff01f', radius: 0.99, valency: 1 }
+        ],
+        bonds: [
+          { start: [0, 0, 0], end: [2.20, 0, 0], type: 'single', length: 2.20, startAtomIndex: 0, endAtomIndex: 1 },
+          { start: [0, 0, 0], end: [-2.20, 0, 0], type: 'single', length: 2.20, startAtomIndex: 0, endAtomIndex: 2 }
+        ]
+      },
+      'H2SO4': {
+        name: 'Sulfuric Acid',
+        formula: 'H2SO4',
+        geometry: 'tetrahedral',
+        isValid: true,
+        source: 'generated',
+        atoms: [
+          { element: 'S', position: [0, 0, 0], color: '#ffff30', radius: 1.05, valency: 6 },
+          { element: 'O', position: [1.44, 0, 0], color: '#ff0d0d', radius: 0.66, valency: 2 },
+          { element: 'O', position: [-1.44, 0, 0], color: '#ff0d0d', radius: 0.66, valency: 2 },
+          { element: 'O', position: [0, 1.44, 0], color: '#ff0d0d', radius: 0.66, valency: 2 },
+          { element: 'O', position: [0, -1.44, 0], color: '#ff0d0d', radius: 0.66, valency: 2 },
+          { element: 'H', position: [2.40, 0, 0], color: '#ffffff', radius: 0.31, valency: 1 },
+          { element: 'H', position: [0, 2.40, 0], color: '#ffffff', radius: 0.31, valency: 1 }
+        ],
+        bonds: [
+          { start: [0, 0, 0], end: [1.44, 0, 0], type: 'single', length: 1.44, startAtomIndex: 0, endAtomIndex: 1 },
+          { start: [0, 0, 0], end: [-1.44, 0, 0], type: 'double', length: 1.44, startAtomIndex: 0, endAtomIndex: 2 },
+          { start: [0, 0, 0], end: [0, 1.44, 0], type: 'single', length: 1.44, startAtomIndex: 0, endAtomIndex: 3 },
+          { start: [0, 0, 0], end: [0, -1.44, 0], type: 'double', length: 1.44, startAtomIndex: 0, endAtomIndex: 4 },
+          { start: [1.44, 0, 0], end: [2.40, 0, 0], type: 'single', length: 0.96, startAtomIndex: 1, endAtomIndex: 5 },
+          { start: [0, 1.44, 0], end: [0, 2.40, 0], type: 'single', length: 0.96, startAtomIndex: 3, endAtomIndex: 6 }
+        ]
+      },
+      'O2': {
+        name: 'Oxygen',
+        formula: 'O2',
+        geometry: 'linear',
+        isValid: true,
+        source: 'generated',
+        atoms: [
+          { element: 'O', position: [0, 0, 0], color: '#ff0d0d', radius: 0.66, valency: 2 },
+          { element: 'O', position: [1.21, 0, 0], color: '#ff0d0d', radius: 0.66, valency: 2 }
+        ],
+        bonds: [
+          { start: [0, 0, 0], end: [1.21, 0, 0], type: 'double', length: 1.21, startAtomIndex: 0, endAtomIndex: 1 }
+        ]
+      },
+      'N2': {
+        name: 'Nitrogen',
+        formula: 'N2',
+        geometry: 'linear',
+        isValid: true,
+        source: 'generated',
+        atoms: [
+          { element: 'N', position: [0, 0, 0], color: '#3050f8', radius: 0.71, valency: 3 },
+          { element: 'N', position: [1.10, 0, 0], color: '#3050f8', radius: 0.71, valency: 3 }
+        ],
+        bonds: [
+          { start: [0, 0, 0], end: [1.10, 0, 0], type: 'triple', length: 1.10, startAtomIndex: 0, endAtomIndex: 1 }
+        ]
+      },
+      'CaCl2': {
+        name: 'Calcium Chloride',
+        formula: 'CaCl2',
+        geometry: 'linear',
+        isValid: true,
+        source: 'generated',
+        atoms: [
+          { element: 'Ca', position: [0, 0, 0], color: '#3dff00', radius: 1.76, valency: 2 },
+          { element: 'Cl', position: [2.31, 0, 0], color: '#1ff01f', radius: 0.99, valency: 1 },
+          { element: 'Cl', position: [-2.31, 0, 0], color: '#1ff01f', radius: 0.99, valency: 1 }
+        ],
+        bonds: [
+          { start: [0, 0, 0], end: [2.31, 0, 0], type: 'single', length: 2.31, startAtomIndex: 0, endAtomIndex: 1 },
+          { start: [0, 0, 0], end: [-2.31, 0, 0], type: 'single', length: 2.31, startAtomIndex: 0, endAtomIndex: 2 }
         ]
       }
     }
@@ -525,6 +640,8 @@ function MolecularViewer3D({ compound, reactionResult, onDataExport }: Molecular
   const [error, setError] = useState<string | null>(null)
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const [isRotating, setIsRotating] = useState(true)
+  const [analysisLoading, setAnalysisLoading] = useState(false)
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null)
   
   // Extract formula and name from props
   const getFormulaAndName = (): { formula: string; name: string } => {
@@ -605,11 +722,74 @@ function MolecularViewer3D({ compound, reactionResult, onDataExport }: Molecular
     
     buildStructure()
   }, [compound, reactionResult])
+
+  // Analyze molecule using Gemini API
+  const analyzeMolecule = async () => {
+    if (!molecularData || !molecularData.isValid) {
+      alert('No valid molecular structure to analyze!')
+      return
+    }
+
+    try {
+      setAnalysisLoading(true)
+      
+      const { formula, name } = getFormulaAndName()
+      
+      const prompt = `I need detailed structural analysis of ${name} (${formula}) to construct an accurate 3D molecular model. Please provide:
+
+**STRUCTURAL DETAILS FOR 3D MODELING:**
+1. Exact atomic coordinates and spatial arrangement
+2. Bond lengths (in Angstroms) between all atom pairs
+3. Bond angles (in degrees) with precise measurements
+4. Dihedral/torsion angles for 3D orientation
+5. Molecular geometry classification (VSEPR theory)
+6. Hybridization state of each atom
+7. Electron domain geometry vs molecular geometry
+8. Any deviations from ideal angles due to lone pairs or steric effects
+
+**CURRENT DETECTED STRUCTURE:**
+- Atoms: ${molecularData.atoms.length}
+- Bonds: ${molecularData.bonds.length} 
+- Geometry: ${molecularData.geometry}
+- Bond details: ${molecularData.bonds.map((bond, i) => 
+  `${molecularData.atoms[bond.startAtomIndex]?.element || 'unknown'}-${molecularData.atoms[bond.endAtomIndex]?.element || 'unknown'} (${bond.type})`
+).join(', ')}
+
+**REQUIRED OUTPUT:**
+Please provide precise numerical data that can be used to construct an accurate 3D molecular model with proper spatial relationships, bond distances, and angular geometry. Include any special structural features like ring strain, conjugation effects, or unusual bonding.`
+
+      const response = await fetch('/api/reactions/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to get molecular analysis: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      
+      if (data.success && data.prediction) {
+        setAnalysisResult(data.prediction)
+      } else {
+        throw new Error(data.error || 'Failed to analyze molecule')
+      }
+    } catch (error) {
+      console.error('Error analyzing molecule:', error)
+      alert(`Error analyzing molecule: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setAnalysisLoading(false)
+    }
+  }
   
   if (loading) {
     return (
       <div className="h-64 flex items-center justify-center">
-        <LoadingAnimation />
+        <div className="flex items-center space-x-2">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          <span className="text-sm text-gray-600">Building molecular structure...</span>
+        </div>
       </div>
     )
   }
@@ -632,6 +812,14 @@ function MolecularViewer3D({ compound, reactionResult, onDataExport }: Molecular
         </div>
         
         <div className="flex space-x-2">
+          <button
+            onClick={analyzeMolecule}
+            disabled={analysisLoading || !molecularData?.isValid}
+            className="p-2 bg-blue-100 rounded-lg hover:bg-blue-200 disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors"
+            title="Analyze molecular structure with AI"
+          >
+            <Brain className="h-4 w-4" />
+          </button>
           <button
             onClick={() => setIsRotating(!isRotating)}
             className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
@@ -698,6 +886,30 @@ function MolecularViewer3D({ compound, reactionResult, onDataExport }: Molecular
           <div><span className="font-medium">Bonds:</span> {molecularData.bonds.length}</div>
           <div><span className="font-medium">Geometry:</span> {molecularData.geometry}</div>
           <div><span className="font-medium">Source:</span> {molecularData.source}</div>
+        </div>
+      )}
+
+      {/* Analysis Result */}
+      {analysisResult && (
+        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <h4 className="font-semibold text-blue-800 mb-2">Molecular Analysis</h4>
+          <div className="text-sm text-blue-700 whitespace-pre-wrap">{analysisResult}</div>
+          <button
+            onClick={() => setAnalysisResult(null)}
+            className="mt-2 text-xs text-blue-600 hover:text-blue-800 underline"
+          >
+            Hide Analysis
+          </button>
+        </div>
+      )}
+
+      {/* Analysis Loading */}
+      {analysisLoading && (
+        <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="flex items-center">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+            <span className="text-sm text-gray-600">Analyzing molecular structure...</span>
+          </div>
         </div>
       )}
     </div>

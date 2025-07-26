@@ -166,7 +166,7 @@ Required JSON format (respond with valid JSON only):
       const elementsText = Array.isArray(elementNames) ? elementNames.join(' + ') : elementNames;
       return `Predict reaction for ${elementsText} at ${temperature}°C, ${pressure} atm, ${volume} mL, ${weight}g.
 Provide JSON with: compoundName, chemicalFormula, reactionEquation, color, state, safetyWarnings (array), explanation, temperature, pressure.
-Make the explanation comprehensive and scientific - include detailed reaction mechanism, thermodynamics, kinetics, limiting reagent analysis, theoretical yield calculations, molecular orbital theory if applicable, and practical applications. Write at least 2 detailed paragraphs with scientific depth.`;
+Make the explanation comprehensive and scientific - include detailed reaction mechanism, thermodynamics, kinetics, limiting reagent analysis, theoretical yield calculations, molecular orbital theory if applicable, and practical applications. Write at least 3-4 detailed paragraphs with complete scientific depth and analysis.`;
     }
   }
 
@@ -256,7 +256,7 @@ Make the explanation comprehensive and scientific - include detailed reaction me
       color: colorMatch ? this.getColorCode(colorMatch[1].trim()) : '#e0f2fe',
       state: stateMatch ? stateMatch[1].trim().toLowerCase() : 'unknown',
       safetyWarnings: safetyWarnings,
-      explanation: explanationMatch ? explanationMatch[1].trim().substring(0, 500) + '...' : 'Chemical reaction analysis.',
+      explanation: explanationMatch ? explanationMatch[1].trim() : 'Chemical reaction analysis.',
       temperature: params.temperature,
       pressure: params.pressure
     };
@@ -915,6 +915,60 @@ FORMULA TO ANALYZE: ${formula}`;
         bondAngle: 180
       }
     };
+  }
+
+  /**
+   * Get multiple possible compounds for given elements using AI
+   * Note: This feature has been deprecated
+   */
+  async getPossibleCompounds(elements: ElementSpec[]): Promise<any[]> {
+    console.log('getPossibleCompounds method deprecated - returning empty array');
+    return [];
+  }
+
+  /**
+   * Build prompt for getting multiple possible compounds
+   * Note: This feature has been deprecated
+   */
+  private buildCompoundListPrompt(elements: ElementSpec[]): string {
+    console.log('buildCompoundListPrompt method deprecated');
+    return '';
+  }
+
+  /**
+   * Parse compound list from AI response
+   * Note: This feature has been deprecated
+   */
+  private parseCompoundList(response: string): any[] {
+    console.log('parseCompoundList method deprecated - returning empty array');
+    return [];
+  }
+
+  /**
+   * Get compound color based on properties
+   */
+  private getCompoundColor(formula: string): string {
+    if (formula.includes('O₂') || formula.includes('O')) return '#E3F2FD';
+    if (formula.includes('N')) return '#F3E5F5';
+    if (formula.includes('C')) return '#E8F5E8';
+    if (formula.includes('S')) return '#FFF3E0';
+    if (formula.includes('Cl')) return '#E0F2E1';
+    if (formula.includes('Fe')) return '#FFECB3';
+    return '#F8F9FA';
+  }
+
+  /**
+   * Get compound common use
+   */
+  private getCompoundUse(name: string): string {
+    const uses: { [key: string]: string } = {
+      'Water': 'Drinking, industrial processes',
+      'Carbon Dioxide': 'Fire extinguishers, carbonation',
+      'Ammonia': 'Fertilizer, cleaning products',
+      'Methane': 'Fuel, heating',
+      'Sodium Chloride': 'Food seasoning, chemical processes'
+    };
+    return uses[name] || 'Various industrial applications';
   }
 }
 

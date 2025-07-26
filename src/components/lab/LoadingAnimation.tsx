@@ -16,81 +16,51 @@ const LoadingAnimation: React.FC<LoadingAnimationProps> = ({
     return (
       <div className="flex flex-col items-center justify-center p-6">
         <div className="relative">
-          {/* Stable Round Bottom Flask */}
+          {/* Simple animated dots */}
           <motion.div
-            className="relative w-16 h-20"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
+            className="flex space-x-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            {/* Flask Base - Round Bottom */}
             <motion.div
-              className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-gradient-to-b from-blue-100 to-blue-300 rounded-full border-2 border-gray-400"
+              className="w-3 h-3 bg-blue-500 rounded-full"
               animate={{
-                scale: [1, 1.02, 1],
+                scale: [1, 1.2, 1],
+                opacity: [0.5, 1, 0.5],
               }}
               transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            >
-              {/* Gentle Bubbles */}
-              <motion.div
-                className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-white bg-opacity-60 rounded-full"
-                animate={{
-                  y: [0, -8, 0],
-                  opacity: [0.3, 0.8, 0.3],
-                }}
-                transition={{
-                  duration: 2.5,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              />
-              <motion.div
-                className="absolute bottom-1 left-1/3 w-1 h-1 bg-white bg-opacity-50 rounded-full"
-                animate={{
-                  y: [0, -6, 0],
-                  opacity: [0.2, 0.7, 0.2],
-                }}
-                transition={{
-                  duration: 2.8,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 0.5,
-                }}
-              />
-            </motion.div>
-            
-            {/* Flask Neck */}
-            <motion.div
-              className="absolute top-0 left-1/2 transform -translate-x-1/2 w-3 h-8 bg-gradient-to-t from-blue-50 to-transparent border-l-2 border-r-2 border-gray-400"
-              animate={{
-                scaleY: [1, 1.01, 1],
-              }}
-              transition={{
-                duration: 3,
+                duration: 1.5,
                 repeat: Infinity,
                 ease: "easeInOut"
               }}
             />
-          </motion.div>
-          
-          {/* Subtle Steam Effect */}
-          <motion.div
-            className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-lg opacity-60"
-            animate={{
-              y: [0, -4, 0],
-              opacity: [0.4, 0.7, 0.4],
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          >
-            ⚗️
+            <motion.div
+              className="w-3 h-3 bg-green-500 rounded-full"
+              animate={{
+                scale: [1, 1.2, 1],
+                opacity: [0.5, 1, 0.5],
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 0.3,
+              }}
+            />
+            <motion.div
+              className="w-3 h-3 bg-purple-500 rounded-full"
+              animate={{
+                scale: [1, 1.2, 1],
+                opacity: [0.5, 1, 0.5],
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: 0.6,
+              }}
+            />
           </motion.div>
         </div>
         

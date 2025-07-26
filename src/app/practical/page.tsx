@@ -15,8 +15,8 @@ import OptimizedLoading from '@/components/lab/OptimizedLoading'
 import PHMeter from '@/components/lab/PHMeter'
 import SafetyInstructions from '@/components/lab/SafetyInstructions'
 import ParticleAnimation from '@/components/lab/ParticleAnimation'
-import PossibleCompounds from '@/components/lab/PossibleCompounds'
 import RecentResults from '@/components/lab/RecentResults'
+import CompoundSuggestions from '@/components/lab/CompoundSuggestions'
 import ClientOnly from '@/components/common/ClientOnly'
 import { formatStateDisplay, getStateOfMatter, getStateColor } from '@/utils/stateOfMatter'
 
@@ -50,7 +50,7 @@ interface ReactionResult {
 }
 
 export default function PracticalModePage() {
-  const [isDarkTheme, setIsDarkTheme] = useState(false)
+  const [isDarkTheme, setIsDarkTheme] = useState(true) // Default to dark mode
   const [settings, setSettings] = useState<any>({
     preferences: { autoSave: true }
   })
@@ -97,7 +97,15 @@ export default function PracticalModePage() {
       setIsDarkTheme(theme === 'dark')
     }
     
-    checkTheme()
+    // Only set default dark mode if no theme preference exists
+    const savedTheme = localStorage.getItem('theme-preference')
+    if (!savedTheme && !document.documentElement.getAttribute('data-theme')) {
+      document.documentElement.setAttribute('data-theme', 'dark')
+      localStorage.setItem('theme-preference', 'dark')
+      setIsDarkTheme(true)
+    } else {
+      checkTheme()
+    }
     
     const observer = new MutationObserver(checkTheme)
     observer.observe(document.documentElement, {
@@ -391,40 +399,24 @@ export default function PracticalModePage() {
     })
   }
 
-  // Clean explanation text (remove incomplete sentences)
+  // Clean explanation text (preserve full content, just clean formatting)
   const cleanExplanation = (text: string): string => {
     if (!text) return ''
     
-    // Remove various incomplete endings and patterns
+    // Only clean up basic formatting issues without removing content
     let cleaned = text
-      // Remove incomplete sentences that end with single words + periods
-      .replace(/\s+[a-zA-Z]+\.\.+\s*$/g, '')
-      // Remove trailing "The" or other incomplete sentence starters
-      .replace(/\s+(?:The|A|An|In|On|At|With|For|By|From|To|Of|And|But|Or|So|If|When|Where|How|Why|What|Which|That|This|These|Those)\s*$/gi, '')
-      // Remove incomplete words at the end
-      .replace(/\s+[a-zA-Z]*\.*\s*$/g, '')
-      // Remove trailing ellipsis or multiple dots
-      .replace(/\.{2,}$/g, '')
-      // Remove incomplete parenthetical expressions
-      .replace(/\s*\([^)]*$/g, '')
+      // Remove excessive whitespace
+      .replace(/\s+/g, ' ')
+      // Remove trailing ellipsis or multiple dots at the very end only
+      .replace(/\.{2,}$/g, '.')
+      // Clean up extra spaces around punctuation
+      .replace(/\s+([,.!?;:])/g, '$1')
+      .replace(/([,.!?;:])\s+/g, '$1 ')
       .trim()
 
-    // If the text doesn't end with proper punctuation, add a period
+    // Ensure proper ending punctuation if missing
     if (cleaned && !cleaned.match(/[.!?;:]$/)) {
-      // Check if the last sentence seems complete (has subject and verb structure)
-      const sentences = cleaned.split(/[.!?]+/)
-      const lastSentence = sentences[sentences.length - 1].trim()
-      
-      // If the last sentence is very short or seems incomplete, remove it
-      if (lastSentence.length < 20 || lastSentence.split(' ').length < 4) {
-        sentences.pop()
-        cleaned = sentences.join('. ').trim()
-        if (cleaned && !cleaned.match(/[.!?;:]$/)) {
-          cleaned += '.'
-        }
-      } else {
-        cleaned += '.'
-      }
+      cleaned += '.'
     }
     
     return cleaned
@@ -534,37 +526,37 @@ export default function PracticalModePage() {
     }
   }
 
-  // Handle possible compound selection
-  const handlePossibleCompoundSelect = (compound: any) => {
-    console.log('Loading compound:', compound)
-    
-    // Set reaction result based on compound
-    const newResult: ReactionResult = {
-      compoundName: compound.name,
-      chemicalFormula: compound.formula,
-      color: compound.color,
-      state: compound.state,
-      safetyWarnings: compound.safetyLevel === 'dangerous' ? ['Handle with extreme caution'] : 
-                     compound.safetyLevel === 'caution' ? ['Handle with care'] : 
-                     ['Safe to handle under normal conditions'],
-      explanation: compound.description,
-      temperature: temperature,
-      pressure: pressure
-    }
-    
-    setReactionResult(newResult)
-    setBeakerColor(compound.color)
-    setShowResult(true)
-    
-    // Add to history
-    addToReactionHistory(newResult)
-  }
-
   // Handle recent result selection
   const handleRecentResultSelect = (result: ReactionResult) => {
     setReactionResult(result)
     setBeakerColor(result.color)
     setShowResult(true)
+  }
+
+  // Handle compound suggestion selection
+  const handleCompoundSuggestionClick = (compound: any) => {
+    console.log('Compound suggestion clicked:', compound)
+    
+    // Create a reaction result from the suggested compound
+    const suggestionResult: ReactionResult = {
+      compoundName: compound.name,
+      chemicalFormula: compound.formula,
+      color: compound.color,
+      state: compound.state,
+      safetyWarnings: compound.commonality === 'Rare' ? ['Handle with caution - rare compound'] : 
+                     compound.state === 'gas' ? ['Ensure proper ventilation'] : 
+                     ['Safe under normal conditions'],
+      explanation: `${compound.name} (${compound.formula}) is a ${compound.commonality.toLowerCase()} compound that exists as a ${compound.state} under standard conditions. ${compound.description}. This suggestion is based on the elements you have selected and represents a chemically feasible combination.`,
+      temperature: temperature,
+      pressure: pressure
+    }
+    
+    setReactionResult(suggestionResult)
+    setBeakerColor(compound.color)
+    setShowResult(true)
+    
+    // Add to history
+    addToReactionHistory(suggestionResult)
   }
 
   // Clear reaction history
@@ -1087,86 +1079,8 @@ export default function PracticalModePage() {
                           compound={beakerContents} 
                           reactionResult={reactionResult}
                           onDataExport={handleMolecularDataExport}
-                          showValidation={true}
-                          mode="3D"
                           isDarkTheme={isDarkTheme}
                         />
-                        
-                        {/* Reaction Parameters */}
-                        {reactionResult && (
-                          <div className={`rounded-lg border p-4 ${
-                            isDarkTheme 
-                              ? 'bg-slate-800 border-slate-700' 
-                              : 'bg-white border-slate-200'
-                          }`}>
-                            <h3 className={`font-semibold mb-3 ${
-                              isDarkTheme ? 'text-white' : 'text-black'
-                            }`}>Reaction Parameters</h3>
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                              <div>
-                                <span className={`font-medium ${
-                                  isDarkTheme ? 'text-slate-300' : 'text-slate-600'
-                                }`}>State:</span>
-                                <div className="flex items-center mt-1">
-                                  <span className="mr-2">{getStateDisplay(reactionResult.state).emoji}</span>
-                                  <span className={isDarkTheme ? 'text-white' : 'text-black'}>
-                                    {getStateDisplay(reactionResult.state).text}
-                                  </span>
-                                </div>
-                              </div>
-                              <div>
-                                <span className={`font-medium ${
-                                  isDarkTheme ? 'text-slate-300' : 'text-slate-600'
-                                }`}>Temperature:</span>
-                                <span className={`block mt-1 ${isDarkTheme ? 'text-white' : 'text-black'}`}>
-                                  {temperature}°C
-                                </span>
-                              </div>
-                              <div>
-                                <span className={`font-medium ${
-                                  isDarkTheme ? 'text-slate-300' : 'text-slate-600'
-                                }`}>Pressure:</span>
-                                <span className={`block mt-1 ${isDarkTheme ? 'text-white' : 'text-black'}`}>
-                                  {pressure} atm
-                                </span>
-                              </div>
-                              <div>
-                                <span className={`font-medium ${
-                                  isDarkTheme ? 'text-slate-300' : 'text-slate-600'
-                                }`}>Volume:</span>
-                                <span className={`block mt-1 ${isDarkTheme ? 'text-white' : 'text-black'}`}>
-                                  {labVolume} mL
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Safety Information Panel */}
-                        {reactionResult && reactionResult.safetyWarnings.length > 0 && (
-                          <div className={`rounded-lg border p-4 ${
-                            isDarkTheme 
-                              ? 'bg-red-900/20 border-red-700' 
-                              : 'bg-red-50 border-red-200'
-                          }`}>
-                            <h3 className={`font-semibold flex items-center mb-3 ${
-                              isDarkTheme ? 'text-red-300' : 'text-red-800'
-                            }`}>
-                              <AlertTriangle className="h-4 w-4 text-red-500 mr-2" />
-                              Safety Warnings
-                            </h3>
-                            <div className="space-y-2">
-                              {reactionResult.safetyWarnings.map((warning, index) => (
-                                <div key={index} className={`flex items-start space-x-2 text-sm ${
-                                  isDarkTheme ? 'text-red-200' : 'text-red-700'
-                                }`}>
-                                  <span className="text-red-500 mt-0.5">⚠️</span>
-                                  <span>{warning}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
                         
                         {/* Chemical Properties */}
                         {reactionResult && (
@@ -1178,25 +1092,85 @@ export default function PracticalModePage() {
                             <h3 className={`font-semibold mb-3 ${
                               isDarkTheme ? 'text-white' : 'text-black'
                             }`}>Chemical Properties</h3>
-                            <div className="space-y-2 text-sm">
-                              {reactionResult.explanation && (
-                                <div>
-                                  <span className={`font-medium ${
-                                    isDarkTheme ? 'text-slate-300' : 'text-slate-600'
-                                  }`}>Analysis:</span>
-                                  <p className={`mt-1 ${isDarkTheme ? 'text-white' : 'text-black'}`}>
-                                    {cleanExplanation(reactionResult.explanation)}
-                                  </p>
-                                </div>
-                              )}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                               {reactionResult.chemicalFormula && (
                                 <div>
                                   <span className={`font-medium ${
                                     isDarkTheme ? 'text-slate-300' : 'text-slate-600'
-                                  }`}>Formula:</span>
-                                  <span className={`ml-2 font-mono ${isDarkTheme ? 'text-white' : 'text-black'}`}>
+                                  }`}>Molecular Formula:</span>
+                                  <div className={`font-mono text-lg ${isDarkTheme ? 'text-white' : 'text-black'}`}>
                                     {reactionResult.chemicalFormula}
-                                  </span>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              <div>
+                                <span className={`font-medium ${
+                                  isDarkTheme ? 'text-slate-300' : 'text-slate-600'
+                                }`}>Physical State:</span>
+                                <div className={`capitalize ${isDarkTheme ? 'text-white' : 'text-black'}`}>
+                                  {reactionResult.state}
+                                </div>
+                              </div>
+                              
+                              <div>
+                                <span className={`font-medium ${
+                                  isDarkTheme ? 'text-slate-300' : 'text-slate-600'
+                                }`}>Color:</span>
+                                <div className={`${isDarkTheme ? 'text-white' : 'text-black'} flex items-center gap-2`}>
+                                  <div 
+                                    className="w-4 h-4 rounded border border-gray-300"
+                                    style={{ backgroundColor: reactionResult.color }}
+                                  ></div>
+                                  {reactionResult.color}
+                                </div>
+                              </div>
+                              
+                              {reactionResult.temperature && (
+                                <div>
+                                  <span className={`font-medium ${
+                                    isDarkTheme ? 'text-slate-300' : 'text-slate-600'
+                                  }`}>Temperature:</span>
+                                  <div className={`${isDarkTheme ? 'text-white' : 'text-black'}`}>
+                                    {reactionResult.temperature}°C
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {reactionResult.pressure && (
+                                <div>
+                                  <span className={`font-medium ${
+                                    isDarkTheme ? 'text-slate-300' : 'text-slate-600'
+                                  }`}>Pressure:</span>
+                                  <div className={`${isDarkTheme ? 'text-white' : 'text-black'}`}>
+                                    {reactionResult.pressure} atm
+                                  </div>
+                                </div>
+                              )}
+                              
+                              <div>
+                                <span className={`font-medium ${
+                                  isDarkTheme ? 'text-slate-300' : 'text-slate-600'
+                                }`}>Compound Type:</span>
+                                <div className={`${isDarkTheme ? 'text-white' : 'text-black'}`}>
+                                  {reactionResult.compoundName.includes('oxide') ? 'Oxide' :
+                                   reactionResult.compoundName.includes('chloride') ? 'Halide' :
+                                   reactionResult.compoundName.includes('acid') ? 'Acid' :
+                                   reactionResult.compoundName.includes('base') ? 'Base' :
+                                   reactionResult.chemicalFormula?.includes('O') ? 'Oxygen-containing' :
+                                   'Inorganic compound'}
+                                </div>
+                              </div>
+                              
+                              {reactionResult.safetyWarnings && reactionResult.safetyWarnings.length > 0 && (
+                                <div>
+                                  <span className={`font-medium ${
+                                    isDarkTheme ? 'text-slate-300' : 'text-slate-600'
+                                  }`}>Safety Level:</span>
+                                  <div className={`${isDarkTheme ? 'text-white' : 'text-black'}`}>
+                                    {reactionResult.safetyWarnings[0].includes('extreme') ? 'Dangerous' :
+                                     reactionResult.safetyWarnings[0].includes('care') ? 'Caution' : 'Safe'}
+                                  </div>
                                 </div>
                               )}
                             </div>
@@ -1422,19 +1396,20 @@ export default function PracticalModePage() {
                 />
               </ClientOnly>
 
-              {/* Possible Compounds Component */}
+              {/* Compound Suggestions */}
               <ClientOnly fallback={
-                <div className="bg-white rounded-lg border p-4 animate-pulse">
-                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
+                <div className="animate-pulse p-4">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-3"></div>
                   <div className="space-y-2">
-                    <div className="h-16 bg-gray-200 rounded"></div>
-                    <div className="h-16 bg-gray-200 rounded"></div>
+                    <div className="h-8 bg-gray-200 rounded"></div>
+                    <div className="h-8 bg-gray-200 rounded"></div>
+                    <div className="h-8 bg-gray-200 rounded"></div>
                   </div>
                 </div>
               }>
-                <PossibleCompounds
+                <CompoundSuggestions
                   selectedElements={beakerContents.map(spec => spec.element)}
-                  onCompoundSelect={handlePossibleCompoundSelect}
+                  onCompoundClick={handleCompoundSuggestionClick}
                 />
               </ClientOnly>
             </div>
